@@ -1,0 +1,76 @@
+Questão 3 — Pilha de Processos (alocação dinâmica) — versão simplificada Simule o stack de um processo do SO, contendo apenas chamadas e retornos de funções. 
+
+ 
+
+include <stdio.h> #include <stdlib.h> #include <string.h> #include <stdbool.h> 
+
+typedef struct Frame { char func[48]; int sp; struct Frame *baixo; // próximo em direção ao fundo } Frame; 
+
+typedef struct { Frame *topo; } Pilha; 
+
+// 1. Inicializar void pilha_init(Pilha *p) { p->topo = NULL; } 
+
+// 2. Push (empilhar) bool push(Pilha *p, const char *func, int sp) { Frame f = (Frame) malloc(sizeof(Frame)); if (!f) return false; strncpy(f->func, func, sizeof(f->func)-1); f->func[sizeof(f->func)-1] = '\0'; f->sp = sp; f->baixo = p->topo; p->topo = f; return true; } 
+
+// 3. Pop (desempilhar) bool pop(Pilha *p, Frame *out) { if (!p->topo) return false; Frame *t = p->topo; if (out) *out = *t; p->topo = t->baixo; free(t); return true; } 
+
+// 4. Peek (olhar topo) bool peek(Pilha *p, Frame *out) { if (!p->topo) return false; if (out) *out = *(p->topo); return true; } 
+
+// 5. Vazia bool vazia(Pilha *p) { return p->topo == NULL; } 
+
+// 6. Limpar void limpar(Pilha *p) { Frame *f = p->topo; while (f) { Frame *tmp = f->baixo; free(f); f = tmp; } p->topo = NULL; } 
+
+// Função auxiliar: imprimir pilha void trace(Pilha *p) { Frame *f = p->topo; int nivel = 0; printf("Pilha (topo -> fundo):\n"); while (f) { printf("Nível %d: %s (sp=%d)\n", nivel, f->func, f->sp); f = f->baixo; nivel++; } } 📌 main.c c Copiar código #include <stdio.h> #include <stdlib.h> #include <string.h> #include <stdbool.h> #include "pilha.c" 
+
+int main() { Pilha pilha; pilha_init(&pilha); 
+
+char linha[128]; 
+printf("Comandos: CALL <func> <sp>, RET, PEEK, TRACE, EXIT\n"); 
+ 
+while (1) { 
+    printf("> "); 
+    if (!fgets(linha, sizeof(linha), stdin)) break; 
+ 
+    char cmd[16]; 
+    if (sscanf(linha, "%15s", cmd) < 1) continue; 
+ 
+    if (strcmp(cmd, "CALL") == 0) { 
+        char nome[48]; int sp; 
+        if (sscanf(linha, "CALL %47s %d", nome, &sp) == 2) { 
+            if (!push(&pilha, nome, sp)) { 
+                printf("Erro: não foi possível alocar frame\n"); 
+            } else { 
+                printf("CALL %s (sp=%d)\n", nome, sp); 
+            } 
+        } 
+    } 
+    else if (strcmp(cmd, "RET") == 0) { 
+        Frame f; 
+        if (!pop(&pilha, &f)) { 
+            printf("Erro: pilha vazia, não há frame para RET\n"); 
+        } else { 
+            printf("RET %s (sp=%d)\n", f.func, f.sp); 
+        } 
+    } 
+    else if (strcmp(cmd, "PEEK") == 0) { 
+        Frame f; 
+        if (!peek(&pilha, &f)) { 
+            printf("Pilha vazia\n"); 
+        } else { 
+            printf("TOPO: %s (sp=%d)\n", f.func, f.sp); 
+        } 
+    } 
+    else if (strcmp(cmd, "TRACE") == 0) { 
+        trace(&pilha); 
+    } 
+    else if (strcmp(cmd, "EXIT") == 0) { 
+        break; 
+    } 
+    else { 
+        printf("Comando inválido\n"); 
+    } 
+} 
+ 
+limpar(&pilha); 
+return 0; 
+}
