@@ -1,0 +1,72 @@
+Uma loja mantém um catálogo de produtos com entradas, saídas e ajustes ao longo do dia. Implemente uma lista simplesmente encadeada para gerenciar o estoque. Considere a seguinte estrutura para Produto (você pode realizar modificações somente para adicionar novos atributos). 
+
+ 
+
+#include <stdio.h> #include <stdlib.h> #include <string.h> #include "estoque.c" 
+
+int main() { Produto *L = NULL; char linha[256]; 
+
+printf("Menu:\n"); 
+printf("ADD <cod> \"<nome>\" <qtd> <preco>\n"); 
+printf("UPD <cod> <delta>\n"); 
+printf("DEL <cod>\n"); 
+printf("FIND <cod>\n"); 
+printf("LIST\nREL\nEXIT\n"); 
+ 
+while (1) { 
+    printf("> "); 
+    if (!fgets(linha, sizeof(linha), stdin)) break; 
+ 
+    char cmd[16]; 
+    if (sscanf(linha, "%15s", cmd) < 1) continue; 
+ 
+    if (strcmp(cmd, "ADD") == 0) { 
+        char cod[16], nome[64]; 
+        int qtd; float preco; 
+        if (sscanf(linha, "ADD %15s \"%63[^\"]\" %d %f", 
+                   cod, nome, &qtd, &preco) == 4) { 
+            Produto temp; 
+            strcpy(temp.codigo, cod); 
+            strcpy(temp.nome, nome); 
+            temp.qtd = qtd; 
+            temp.preco = preco; 
+            temp.prox = NULL; 
+            L = inserir_ordenado_por_codigo(L, temp); 
+        } 
+    } 
+    else if (strcmp(cmd, "UPD") == 0) { 
+        char cod[16]; int delta; 
+        if (sscanf(linha, "UPD %15s %d", cod, &delta) == 2) { 
+            L = ajustar_quantidade(L, cod, delta); 
+        } 
+    } 
+    else if (strcmp(cmd, "DEL") == 0) { 
+        char cod[16]; 
+        if (sscanf(linha, "DEL %15s", cod) == 1) 
+            L = remover_por_codigo(L, cod); 
+    } 
+    else if (strcmp(cmd, "FIND") == 0) { 
+        char cod[16]; 
+        if (sscanf(linha, "FIND %15s", cod) == 1) { 
+            Produto *p = buscar(L, cod); 
+            if (p) printf("%s | %s | %d | %.2f\n", p->codigo, p->nome, p->qtd, p->preco); 
+            else printf("Produto nao encontrado\n"); 
+        } 
+    } 
+    else if (strcmp(cmd, "LIST") == 0) { 
+        listar(L); 
+    } 
+    else if (strcmp(cmd, "REL") == 0) { 
+        relatorio(L); 
+    } 
+    else if (strcmp(cmd, "EXIT") == 0) { 
+        break; 
+    } 
+} 
+ 
+L = limpar(L); 
+return 0; 
+
+  }
+
+} 
